@@ -5,6 +5,7 @@ struct SetupView: View {
     @State private var sessionKey = ""
     @State private var orgId = ""
     @State private var showCookieForm = false
+    @State private var isConnecting = false
 
     var body: some View {
         VStack(spacing: DS.Space._4) {
@@ -20,15 +21,28 @@ struct SetupView: View {
                 .foregroundStyle(DS.Color.secondary)
                 .multilineTextAlignment(.center)
 
-            Button(action: { authService.connectClaudeCode() }) {
+            Button(action: {
+                isConnecting = true
+                // Delay slightly so the UI updates before the synchronous keychain call
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    authService.connectClaudeCode()
+                    isConnecting = false
+                }
+            }) {
                 HStack(spacing: DS.Space._2) {
-                    Image(systemName: "terminal")
-                    Text("Connect via Claude Code")
+                    if isConnecting {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Image(systemName: "terminal")
+                    }
+                    Text(isConnecting ? "Connecting..." : "Connect via Claude Code")
                 }
                 .font(DS.Font.button)
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .disabled(isConnecting)
 
             Text("Requires Claude Code installed and signed in")
                 .font(DS.Font.caption)

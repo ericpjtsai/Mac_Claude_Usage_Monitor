@@ -9,16 +9,22 @@ struct ClaudeUsageMonitorApp: App {
     init() {
         let auth = AuthService()
         let usage = UsageService(authService: auth)
-        let polling = PollingService(usageService: usage)
+        let polling = PollingService(usageService: usage, authService: auth)
         _authService = StateObject(wrappedValue: auth)
         _usageService = StateObject(wrappedValue: usage)
         _pollingService = StateObject(wrappedValue: polling)
+        // PollingService observes AuthService.$isAuthenticated and starts itself
+        // when auth is active (initial value fires immediately on subscription).
 
-        // Schedule polling start after app is fully initialized
-        // DispatchQueue.main.async runs after init() completes and the run loop starts
-        if auth.isAuthenticated {
+        NotificationService.shared.requestPermission()
+        NotificationService.shared.onAuthNotificationTapped = {
+            AuthWindowController.shared.showSetupWindow(authService: auth)
+        }
+
+        // Show setup window on launch if not authenticated
+        if !auth.isAuthenticated {
             DispatchQueue.main.async {
-                polling.start()
+                AuthWindowController.shared.showSetupWindow(authService: auth)
             }
         }
     }
@@ -31,18 +37,6 @@ struct ClaudeUsageMonitorApp: App {
                 pollingService: pollingService
             )
             .frame(width: 320)
-            .onChange(of: authService.isAuthenticated) { _, isAuth in
-                if isAuth {
-                    pollingService.start()
-                } else {
-                    pollingService.stop()
-                    // Clear stale data so the menu bar icon resets to "--%"
-                    usageService.usage = nil
-                    usageService.userInfo = nil
-                    usageService.lastUpdated = nil
-                    usageService.error = nil
-                }
-            }
         } label: {
             Image(nsImage: MenuBarIconRenderer.render(
                 percentage: usageService.usage?.primaryBucket?.utilization

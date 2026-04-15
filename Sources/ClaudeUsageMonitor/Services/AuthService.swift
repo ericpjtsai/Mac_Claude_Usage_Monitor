@@ -67,13 +67,16 @@ final class AuthService: ObservableObject {
 
     func connectClaudeCode() {
         authError = nil
+        NSLog("[Auth] connectClaudeCode() called")
 
         // Reuse cached creds from restoreSession() to avoid a second keychain prompt
         let creds = cachedClaudeCodeCreds ?? KeychainService.loadClaudeCodeCredentials()
         cachedClaudeCodeCreds = nil  // Clear cache after use
 
         guard let creds else {
-            authError = "Claude Code credentials not found in Keychain (service: '\(Constants.claudeCodeKeychainService)'). Make sure Claude Code is installed and you're signed in with your Claude account. You may need to grant Keychain access when prompted."
+            let msg = "Claude Code credentials not found in Keychain (service: '\(Constants.claudeCodeKeychainService)'). Make sure Claude Code is installed and you're signed in with your Claude account. You may need to grant Keychain access when prompted."
+            NSLog("[Auth] \(msg)")
+            authError = msg
             return
         }
 

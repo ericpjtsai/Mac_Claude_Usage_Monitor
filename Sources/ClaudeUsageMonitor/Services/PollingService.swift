@@ -7,14 +7,19 @@ final class PollingService: ObservableObject {
     @Published var refreshInterval: TimeInterval = Constants.defaultRefreshInterval
 
     private let usageService: UsageService
+    private let authService: AuthService
     private var timerTask: Task<Void, Never>?
     private var sleepObserver: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
     private var isPaused = false
+    private var wasEverAuthenticated = false
+    private var authCancellable: AnyCancellable?
 
-    init(usageService: UsageService) {
+    init(usageService: UsageService, authService: AuthService) {
         self.usageService = usageService
+        self.authService = authService
         observeSleepWake()
+        observeAuth()
     }
 
     deinit {
@@ -69,6 +74,36 @@ final class PollingService: ObservableObject {
         Task.detached { [weak self] in
             await self?.usageService.fetchUsage()
         }
+    }
+
+    // MARK: - Auth Observation
+
+    private func observeAuth() {
+        authCancellable = authService.$isAuthenticated
+            .removeDuplicates()
+            .sink { [weak self] isAuth in
+                guard let self else { return }
+                Task { @MainActor in
+                    if isAuth {
+                        NSLog("[Polling] Auth became active — (re)starting polling")
+                        self.wasEverAuthenticated = true
+                        self.stop()  // ensure clean state
+                        self.start()
+                    } else {
+                        NSLog("[Polling] Auth became inactive — stopping polling and clearing data")
+                        self.stop()
+                        self.usageService.usage = nil
+                        self.usageService.userInfo = nil
+                        self.usageService.lastUpdated = nil
+                        self.usageService.error = nil
+
+                        // Notify user only when credentials expire mid-session
+                        if self.wasEverAuthenticated {
+                            NotificationService.shared.sendAuthExpiredNotification()
+                        }
+                    }
+                }
+            }
     }
 
     // MARK: - Sleep/Wake
