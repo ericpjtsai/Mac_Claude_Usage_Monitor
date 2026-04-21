@@ -60,7 +60,7 @@ final class UsageService: ObservableObject {
             } else if case .unauthorized = usageError {
                 // Before giving up, try refreshing credentials from keychain and retry once
                 NSLog("[Usage] Got 401, attempting credential refresh and retry...")
-                if authService.tryRefreshCredentials() {
+                if await authService.tryRefreshCredentials() {
                     do {
                         let retryResponse = try await performFetchWithAuth()
                         NSLog("[Usage] Retry succeeded after credential refresh!")
@@ -95,7 +95,7 @@ final class UsageService: ObservableObject {
 
         switch creds {
         case .claudeCode:
-            let token = try authService.getAccessToken()
+            let token = try await authService.getAccessToken()
             NSLog("[Usage] Fetching with Claude Code token (fresh from keychain)")
             return try await fetchWithOAuthToken(token)
         case .session(let session):
@@ -110,7 +110,7 @@ final class UsageService: ObservableObject {
         guard case .claudeCode = authService.currentCredentials else { return }
 
         do {
-            let token = try authService.getAccessToken()
+            let token = try await authService.getAccessToken()
             var request = URLRequest(url: Constants.oauthUserinfoURL)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             request.setValue(Constants.betaHeader, forHTTPHeaderField: "anthropic-beta")

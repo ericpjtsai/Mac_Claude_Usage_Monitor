@@ -4,7 +4,7 @@ set -euo pipefail
 # Configuration
 APP_NAME="ClaudeUsageMonitor"
 BUNDLE_ID="com.claudeusagemonitor.app"
-VERSION="1.0.3"
+VERSION="1.0.5"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"

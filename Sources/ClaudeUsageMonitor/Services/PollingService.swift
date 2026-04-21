@@ -97,9 +97,12 @@ final class PollingService: ObservableObject {
                         self.usageService.lastUpdated = nil
                         self.usageService.error = nil
 
-                        // Notify user only when credentials expire mid-session
+                        // Notify user and surface the auth window when credentials
+                        // expire mid-session. Notifications can be missed/muted, so
+                        // showing the window directly is the reliable path.
                         if self.wasEverAuthenticated {
                             NotificationService.shared.sendAuthExpiredNotification()
+                            AuthWindowController.shared.showSetupWindow(authService: self.authService)
                         }
                     }
                 }

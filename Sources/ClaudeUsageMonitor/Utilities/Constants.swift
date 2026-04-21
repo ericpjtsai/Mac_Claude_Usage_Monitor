@@ -5,6 +5,8 @@ enum Constants {
     /// Used with Claude Code OAuth token (Bearer auth)
     static let oauthUsageURL = URL(string: "https://api.anthropic.com/api/oauth/usage")!
     static let oauthUserinfoURL = URL(string: "https://api.anthropic.com/api/oauth/userinfo")!
+    static let oauthTokenURL = URL(string: "https://console.anthropic.com/v1/oauth/token")!
+    static let claudeCodeOAuthClientID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
     static let betaHeader = "oauth-2025-04-20"
 
     /// Used with session cookie auth
@@ -25,5 +27,5 @@ enum Constants {
 
     // MARK: - App
     static let appName = "Claude Usage Monitor"
-    static let appVersion = "1.0.2"
+    static let appVersion = "1.0.5"
 }
